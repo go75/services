@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"services/logservice"
-	"services/registry"
 	"strconv"
 	"sync/atomic"
 )
@@ -24,7 +23,7 @@ func (s *visistService) register() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		s.visistCount.Add(1)
 		count := strconv.Itoa(int(s.visistCount.Load()))
-		err := logservice.Println(registry.Get("LogService"), count)
+		err := logservice.Println(count)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Printf("Log service println error: %s\n", err)

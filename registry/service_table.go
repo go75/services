@@ -110,6 +110,10 @@ func (t *serviceTable) remove(registration *Registration) {
 func (t *serviceTable) get(serviceName string) *Registration {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
-	regs := t.serviceInfos[serviceName]
-	return regs[rand.Intn(len(regs))]
+	regs, ok := t.serviceInfos[serviceName]
+	if !ok && len(regs) < 1 {
+		return nil
+	}
+	idx := rand.Intn(len(regs))
+	return regs[idx]
 }

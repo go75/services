@@ -10,9 +10,9 @@ import (
 func main() {
 	visistservice.Init()
 	err := service.Run(&registry.Registration{
-		ServiceName:      "VisistService",
-		ServiceAddr:      "127.0.0.1:20003",
-		RequiredServices: []string{"LogService"},
+		ServiceName:      "visist",
+		ServiceAddr:      "127.0.0.1:20004",
+		RequiredServices: []string{"log"},
 	})
 	if err != nil {
 		log.Fatalln(err)

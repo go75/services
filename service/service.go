@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"services/registry"
@@ -17,7 +18,7 @@ func Run(registration *registry.Registration) (err error) {
 		return err
 	}
 	defer func() {
-		err = registry.UnregistService(registration)
+		err = errors.Join(err, registry.UnregistService(registration))
 	}()
 
 	srv := http.Server{Addr: registration.ServiceAddr}

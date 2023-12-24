@@ -92,6 +92,10 @@ func UnregistService(registration *Registration) error {
 
 var provider = newServiceTable()
 
-func Get(serviceName string) *Registration {
-	return provider.get(serviceName)
+func Get(serviceName string) string {
+	reg := provider.get(serviceName)
+	if reg != nil {
+		return reg.ServiceAddr
+	}
+	return ""
 }
