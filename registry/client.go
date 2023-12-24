@@ -13,7 +13,7 @@ func registerMonitorHandler() {
 
 		switch r.Method {
 		case http.MethodPost:
-			service, err := buildRegistration(r.Body)
+			service, err := buildServiceInfo(r.Body)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -22,7 +22,7 @@ func registerMonitorHandler() {
 			fmt.Printf("add service %s\n", service.Name)
 
 		case http.MethodDelete:
-			service, err := buildRegistration(r.Body)
+			service, err := buildServiceInfo(r.Body)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -50,7 +50,7 @@ func RegistService(service *ServiceInfo) error {
 		return err
 	}
 
-	resp, err := http.Post("http://" + serviceAddr + "/services", "application/json", bytes.NewReader(data))
+	resp, err := http.Post("http://"+serviceAddr+"/services", "application/json", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func UnregistService(service *ServiceInfo) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, "http://" + serviceAddr + "/services", bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodDelete, "http://"+serviceAddr+"/services", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}

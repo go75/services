@@ -111,7 +111,7 @@ func (t *serviceTable) get(serviceName string) *ServiceInfo {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 	services, ok := t.serviceInfos[serviceName]
-	if !ok && len(services) < 1 {
+	if !ok || len(services) < 1 {
 		return nil
 	}
 	idx := rand.Intn(len(services))
