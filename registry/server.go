@@ -1,7 +1,10 @@
 package registry
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -41,33 +44,39 @@ func (s *RegistryService) Run() error {
 		case http.MethodPost:
 			serviceInfo, err := buildServiceInfo(r.Body)
 			if err != nil {
+				log.Println("build service info err:", err)
 				statusCode = http.StatusInternalServerError
 				goto END
 			}
 
 			err = s.regist(serviceInfo)
 			if err != nil {
+				log.Println("regist service err: ", err)
 				statusCode = http.StatusInternalServerError
 				goto END
 			}
 
 			serviceInfos := s.serviceInfos.buildRequiredServiceInfos(serviceInfo)
-			data, err := json.Marshal(&serviceInfos)
+			data, err := json.Marshal(serviceInfos)
 			if err != nil {
+				log.Println("marshal srevice infos err: ", err)
 				statusCode = http.StatusInternalServerError
 				goto END
 			}
 			defer w.Write(data)
 
+
 		case http.MethodDelete:
 			serviceInfo, err := buildServiceInfo(r.Body)
 			if err != nil {
+				log.Println("build service info err:", err)
 				statusCode = http.StatusInternalServerError
 				goto END
 			}
 
 			s.unregist(serviceInfo)
 			if err != nil {
+				log.Println("unregist service err: ", err)
 				statusCode = http.StatusInternalServerError
 				goto END
 			}
@@ -118,12 +127,46 @@ func (s *RegistryService) heartBeat() {
 
 func (s *RegistryService) regist(service *ServiceInfo) error {
 	s.serviceInfos.add(service)
-	println("add " + service.Name + " after ->", s.serviceInfos.get(service.Name).Addr)
-	return s.serviceInfos.notify(http.MethodPost, service)
+	return s.notify(http.MethodPost, service)
 }
 
 func (s *RegistryService) unregist(service *ServiceInfo) error {
 	s.serviceInfos.remove(service)
-	println("remove " + service.Name + " after ->", len(s.serviceInfos.serviceInfos[service.Name]))
-	return s.serviceInfos.notify(http.MethodDelete, service)
+	return s.notify(http.MethodDelete, service)
+}
+
+func (s *RegistryService) notify(method string, serviceInfo *ServiceInfo) error {
+	if method != http.MethodPost && method != http.MethodDelete {
+		return fmt.Errorf("method not allowed with method: %s", method)
+	}
+
+	s.serviceInfos.lock.RLock()
+	defer s.serviceInfos.lock.RUnlock()
+
+	data, err := json.Marshal(serviceInfo)
+	if err != nil {
+		return err
+	}
+
+	for _, services := range s.serviceInfos.serviceInfos {
+		for _, service := range services {
+			for _, requiredServiceName := range service.RequiredServices {
+				if requiredServiceName == serviceInfo.Name {
+					req, err := http.NewRequest(method, "http://" + service.Addr + "/services", bytes.NewReader(data))
+					if err != nil {
+						log.Println("create http request with url http://" + service.Addr + "/services err:", err)
+						continue
+					}
+					_, err = http.DefaultClient.Do(req)
+					if err != nil {
+						log.Println("nogify http://" + service.Addr + "/services err:", err)
+						continue
+					}
+					log.Println("update url: ", service.Addr + "/services")
+				}
+			}
+		}
+	}
+
+	return nil
 }

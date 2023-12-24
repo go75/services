@@ -1,13 +1,11 @@
 package registry
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
-	"net/http"
 	"sync"
 )
 
@@ -49,38 +47,6 @@ func (t *serviceTable) buildRequiredServiceInfos(service *ServiceInfo) map[strin
 	return m
 }
 
-func (t *serviceTable) notify(method string, service *ServiceInfo) error {
-	if method != http.MethodPost && method != http.MethodDelete {
-		fmt.Println(method, method == http.MethodPost, method == http.MethodDelete)
-		return fmt.Errorf("method not allowed with method: %s", method)
-	}
-
-	t.lock.RLock()
-	defer t.lock.RUnlock()
-
-	data, err := json.Marshal(service)
-	if err != nil {
-		return err
-	}
-
-	for _, services := range t.serviceInfos {
-		for _, service := range services {
-			for _, requiredServiceName := range service.RequiredServices {
-				if requiredServiceName == service.Name {
-					req, err := http.NewRequest(method, "http://" + service.Addr + "/services", bytes.NewReader(data))
-					if err != nil {
-						continue
-					}
-					log.Println("update url: ", service.Addr + "/services")
-					http.DefaultClient.Do(req)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
 func (t *serviceTable) add(service *ServiceInfo) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -111,4 +77,18 @@ func (t *serviceTable) get(serviceName string) *ServiceInfo {
 	}
 	idx := rand.Intn(len(services))
 	return services[idx]
+}
+
+func (t *serviceTable) dump() {
+	t.lock.RLock()
+	defer t.lock.RUnlock()
+	fmt.Println("==========Dump Service Table Start==========")
+	for k, v := range t.serviceInfos {
+		fmt.Print("Service " + k + ": [ ")
+		for i := 0; i < len(v); i++ {
+			fmt.Print(v[i].Addr + " ")
+		}
+		fmt.Println("]")
+	}
+	fmt.Println("==========Dump Service Table End==========")
 }

@@ -9,8 +9,6 @@ import (
 
 func registerMonitorHandler() {
 	http.HandleFunc("/services", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
 		switch r.Method {
 		case http.MethodPost:
 			service, err := buildServiceInfo(r.Body)
@@ -63,6 +61,8 @@ func RegistService(service *ServiceInfo) error {
 	if err != nil {
 		return err
 	}
+
+	provider.dump()
 
 	return nil
 }
