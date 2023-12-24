@@ -86,11 +86,7 @@ func (t *serviceTable) add(service *ServiceInfo) {
 	defer t.lock.Unlock()
 
 	log.Printf("Service table add %s with address %s\n", service.Name, service.Addr)
-	if services, ok := t.serviceInfos[service.Name]; ok {
-		services = append(services, service)
-	} else {
-		t.serviceInfos[service.Name] = []*ServiceInfo{service}
-	}
+	t.serviceInfos[service.Name] = append(t.serviceInfos[service.Name], service)
 }
 
 func (t *serviceTable) remove(service *ServiceInfo) {
@@ -98,11 +94,10 @@ func (t *serviceTable) remove(service *ServiceInfo) {
 	defer t.lock.Unlock()
 
 	log.Printf("Service table remove %s with address %s\n", service.Name, service.Addr)
-	if services, ok := t.serviceInfos[service.Name]; ok {
-		for i := len(services) - 1; i >= 0; i-- {
-			if services[i].Addr == service.Addr {
-				services = append(services[:i], services[i+1:]...)
-			}
+	services := t.serviceInfos[service.Name]
+	for i := len(services) - 1; i >= 0; i-- {
+		if services[i].Addr == service.Addr {
+			t.serviceInfos[service.Name] = append(services[:i], services[i+1:]...)
 		}
 	}
 }

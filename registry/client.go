@@ -56,7 +56,7 @@ func RegistService(service *ServiceInfo) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Regist %s error with code %d", service.Name, resp.StatusCode)
+		return fmt.Errorf("regist %s error with code %d", service.Name, resp.StatusCode)
 	}
 
 	err = provider.parseServiceInfos(resp.Body)
@@ -84,7 +84,7 @@ func UnregistService(service *ServiceInfo) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Unregist %s error with code %d", service.Name, resp.StatusCode)
+		return fmt.Errorf("unregist %s error with code %d", service.Name, resp.StatusCode)
 	}
 
 	return nil

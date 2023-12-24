@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	serviceName = "Registry Service"
 	serviceAddr = "127.0.0.1:20000"
 )
 
@@ -119,10 +118,12 @@ func (s *RegistryService) heartBeat() {
 
 func (s *RegistryService) regist(service *ServiceInfo) error {
 	s.serviceInfos.add(service)
+	println("add " + service.Name + " after ->", s.serviceInfos.get(service.Name).Addr)
 	return s.serviceInfos.notify(http.MethodPost, service)
 }
 
 func (s *RegistryService) unregist(service *ServiceInfo) error {
 	s.serviceInfos.remove(service)
+	println("remove " + service.Name + " after ->", len(s.serviceInfos.serviceInfos[service.Name]))
 	return s.serviceInfos.notify(http.MethodDelete, service)
 }
