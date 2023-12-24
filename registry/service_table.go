@@ -52,7 +52,7 @@ func (t *serviceTable) buildRequiredServiceInfos(service *ServiceInfo) map[strin
 func (t *serviceTable) notify(method string, service *ServiceInfo) error {
 	if method != http.MethodPost && method != http.MethodDelete {
 		fmt.Println(method, method == http.MethodPost, method == http.MethodDelete)
-		return fmt.Errorf("Method not allowed with method: %s", method)
+		return fmt.Errorf("method not allowed with method: %s", method)
 	}
 
 	t.lock.RLock()
