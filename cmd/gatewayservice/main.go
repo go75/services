@@ -9,9 +9,9 @@ import (
 
 func main() {
 	gatewayservice.Init()
-	err := service.Run(&registry.Registration{
-		ServiceName: "",
-		ServiceAddr: "127.0.0.1:20003",
+	err := service.Run(&registry.ServiceInfo{
+		Name: "",
+		Addr: "127.0.0.1:20003",
 		RequiredServices: []string{"log", "visist"},
 	})
 

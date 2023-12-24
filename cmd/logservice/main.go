@@ -9,9 +9,9 @@ import (
 
 func main() {
 	logservice.Init("./services.log")
-	err := service.Run(&registry.Registration{
-		ServiceName:      "log",
-		ServiceAddr:      "127.0.0.1:20002",
+	err := service.Run(&registry.ServiceInfo{
+		Name:      "log",
+		Addr:      "127.0.0.1:20002",
 		RequiredServices: make([]string, 0),
 	})
 	if err != nil {

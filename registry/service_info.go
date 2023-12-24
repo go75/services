@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type Registration struct {
-	ServiceName string
-	ServiceAddr string
+type ServiceInfo struct {
+	Name string
+	Addr string
 	RequiredServices []string
 }
 
-func buildRegistration(reader io.ReadCloser) (*Registration, error) {
+func buildRegistration(reader io.ReadCloser) (*ServiceInfo, error) {
 	defer reader.Close()
 
 	data, err := io.ReadAll(reader)
@@ -21,13 +21,13 @@ func buildRegistration(reader io.ReadCloser) (*Registration, error) {
 		return nil, err
 	}
 
-	registration := new(Registration)
-	err = json.Unmarshal(data, registration)
+	serviceInfo := new(ServiceInfo)
+	err = json.Unmarshal(data, serviceInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return registration, nil
+	return serviceInfo, nil
 }
 
 func buildServiceInfo(reader io.ReadCloser) ([]string, error) {

@@ -12,16 +12,16 @@ type Service interface {
 	Init()
 }
 
-func Run(registration *registry.Registration) (err error) {
-	err = registry.RegistService(registration)
+func Run(service *registry.ServiceInfo) (err error) {
+	err = registry.RegistService(service)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err = errors.Join(err, registry.UnregistService(registration))
+		err = errors.Join(err, registry.UnregistService(service))
 	}()
 
-	srv := http.Server{Addr: registration.ServiceAddr}
+	srv := http.Server{Addr: service.Addr}
 
 	go func() {
 		fmt.Println("Press any key to stop.")

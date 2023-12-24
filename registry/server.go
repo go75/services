@@ -86,19 +86,19 @@ func (s *RegistryService) Run() error {
 }
 
 func (s *RegistryService) heartBeat() {
-	channel := make(chan *Registration, 1)
+	channel := make(chan *ServiceInfo, 1)
 	for i := 0; i < s.heartBeatWorkerNumber; i++ {
 		go func() {
-			for reg := range channel {
+			for service := range channel {
 				for j := 0; j < s.heartBeatAttempCount; j++ {
-					resp, err := http.Get("http://" + reg.ServiceAddr + "/heart-beat")
+					resp, err := http.Get("http://" + service.Addr + "/heart-beat")
 					if err == nil && resp.StatusCode == http.StatusOK {
 						goto NEXT
 					}
 					time.Sleep(s.heartBeatAttempDuration)
 				}
 
-				s.unregist(reg)
+				s.unregist(service)
 
 				NEXT:
 			}
@@ -117,12 +117,12 @@ func (s *RegistryService) heartBeat() {
 	}
 }
 
-func (s *RegistryService) regist(registration *Registration) error {
-	s.serviceInfos.add(registration)
-	return s.serviceInfos.notify(http.MethodPost, registration)
+func (s *RegistryService) regist(service *ServiceInfo) error {
+	s.serviceInfos.add(service)
+	return s.serviceInfos.notify(http.MethodPost, service)
 }
 
-func (s *RegistryService) unregist(registration *Registration) error {
-	s.serviceInfos.remove(registration)
-	return s.serviceInfos.notify(http.MethodDelete, registration)
+func (s *RegistryService) unregist(service *ServiceInfo) error {
+	s.serviceInfos.remove(service)
+	return s.serviceInfos.notify(http.MethodDelete, service)
 }

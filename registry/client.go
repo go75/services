@@ -13,22 +13,22 @@ func registerMonitorHandler() {
 
 		switch r.Method {
 		case http.MethodPost:
-			registration, err := buildRegistration(r.Body)
+			service, err := buildRegistration(r.Body)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			provider.add(registration)
-			fmt.Printf("add service %s\n", registration.ServiceName)
+			provider.add(service)
+			fmt.Printf("add service %s\n", service.Name)
 
 		case http.MethodDelete:
-			registration, err := buildRegistration(r.Body)
+			service, err := buildRegistration(r.Body)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			provider.remove(registration)
-			fmt.Printf("remove service %s\n", registration.ServiceName)
+			provider.remove(service)
+			fmt.Printf("remove service %s\n", service.Name)
 
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -42,10 +42,10 @@ func registerMonitorHandler() {
 	})
 }
 
-func RegistService(registration *Registration) error {
+func RegistService(service *ServiceInfo) error {
 	registerMonitorHandler()
 
-	data, err := json.Marshal(registration)
+	data, err := json.Marshal(service)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func RegistService(registration *Registration) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Regist %s error with code %d", registration.ServiceName, resp.StatusCode)
+		return fmt.Errorf("Regist %s error with code %d", service.Name, resp.StatusCode)
 	}
 
 	err = provider.parseServiceInfos(resp.Body)
@@ -67,8 +67,8 @@ func RegistService(registration *Registration) error {
 	return nil
 }
 
-func UnregistService(registration *Registration) error {
-	data, err := json.Marshal(registration)
+func UnregistService(service *ServiceInfo) error {
+	data, err := json.Marshal(service)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func UnregistService(registration *Registration) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Unregist %s error with code %d", registration.ServiceName, resp.StatusCode)
+		return fmt.Errorf("Unregist %s error with code %d", service.Name, resp.StatusCode)
 	}
 
 	return nil
@@ -93,9 +93,9 @@ func UnregistService(registration *Registration) error {
 var provider = newServiceTable()
 
 func Get(serviceName string) string {
-	reg := provider.get(serviceName)
-	if reg != nil {
-		return reg.ServiceAddr
+	service := provider.get(serviceName)
+	if service != nil {
+		return service.Addr
 	}
 	return ""
 }

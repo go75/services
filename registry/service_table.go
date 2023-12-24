@@ -12,13 +12,13 @@ import (
 )
 
 type serviceTable struct {
-	serviceInfos map[string][]*Registration
+	serviceInfos map[string][]*ServiceInfo
 	lock *sync.RWMutex
 }
 
 func newServiceTable() *serviceTable {
 	return &serviceTable{
-		serviceInfos: make(map[string][]*Registration),
+		serviceInfos: make(map[string][]*ServiceInfo),
 		lock: new(sync.RWMutex),
 	}
 }
@@ -37,19 +37,19 @@ func (t *serviceTable) parseServiceInfos(reader io.ReadCloser) (err error){
 	return
 }
 
-func (t *serviceTable) buildRequiredServiceInfos(registration *Registration) map[string][]*Registration {
-	m := make(map[string][]*Registration, len(registration.RequiredServices))
+func (t *serviceTable) buildRequiredServiceInfos(service *ServiceInfo) map[string][]*ServiceInfo {
+	m := make(map[string][]*ServiceInfo, len(service.RequiredServices))
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 	
-	for _, serviceName := range registration.RequiredServices {
+	for _, serviceName := range service.RequiredServices {
 		m[serviceName] = t.serviceInfos[serviceName]
 	}
 
 	return m
 }
 
-func (t *serviceTable) notify(method string, registration *Registration) error {
+func (t *serviceTable) notify(method string, service *ServiceInfo) error {
 	if method != http.MethodPost && method != http.MethodDelete {
 		fmt.Println(method, method == http.MethodPost, method == http.MethodDelete)
 		return fmt.Errorf("Method not allowed with method: %s", method)
@@ -58,20 +58,20 @@ func (t *serviceTable) notify(method string, registration *Registration) error {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
-	data, err := json.Marshal(registration)
+	data, err := json.Marshal(service)
 	if err != nil {
 		return err
 	}
 
-	for _, registrations := range t.serviceInfos {
-		for _, reg := range registrations {
-			for _, requiredServiceName := range reg.RequiredServices {
-				if requiredServiceName == registration.ServiceName {
-					req, err := http.NewRequest(method, "http://" + reg.ServiceAddr + "/services", bytes.NewReader(data))
+	for _, services := range t.serviceInfos {
+		for _, service := range services {
+			for _, requiredServiceName := range service.RequiredServices {
+				if requiredServiceName == service.Name {
+					req, err := http.NewRequest(method, "http://" + service.Addr + "/services", bytes.NewReader(data))
 					if err != nil {
 						continue
 					}
-					log.Println("update url: ", reg.ServiceAddr + "/services")
+					log.Println("update url: ", service.Addr + "/services")
 					http.DefaultClient.Do(req)
 				}
 			}
@@ -81,39 +81,39 @@ func (t *serviceTable) notify(method string, registration *Registration) error {
 	return nil
 }
 
-func (t *serviceTable) add(registration *Registration) {
+func (t *serviceTable) add(service *ServiceInfo) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	log.Printf("Service table add %s with address %s\n", registration.ServiceName, registration.ServiceAddr)
-	if registrations, ok := t.serviceInfos[registration.ServiceName]; ok {
-		registrations = append(registrations, registration)
+	log.Printf("Service table add %s with address %s\n", service.Name, service.Addr)
+	if services, ok := t.serviceInfos[service.Name]; ok {
+		services = append(services, service)
 	} else {
-		t.serviceInfos[registration.ServiceName] = []*Registration{registration}
+		t.serviceInfos[service.Name] = []*ServiceInfo{service}
 	}
 }
 
-func (t *serviceTable) remove(registration *Registration) {
+func (t *serviceTable) remove(service *ServiceInfo) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
-	log.Printf("Service table remove %s with address %s\n", registration.ServiceName, registration.ServiceAddr)
-	if registrations, ok := t.serviceInfos[registration.ServiceName]; ok {
-		for i := len(registrations) - 1; i >= 0; i-- {
-			if registrations[i].ServiceAddr == registration.ServiceAddr {
-				registrations = append(registrations[:i], registrations[i+1:]...)
+	log.Printf("Service table remove %s with address %s\n", service.Name, service.Addr)
+	if services, ok := t.serviceInfos[service.Name]; ok {
+		for i := len(services) - 1; i >= 0; i-- {
+			if services[i].Addr == service.Addr {
+				services = append(services[:i], services[i+1:]...)
 			}
 		}
 	}
 }
 
-func (t *serviceTable) get(serviceName string) *Registration {
+func (t *serviceTable) get(serviceName string) *ServiceInfo {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
-	regs, ok := t.serviceInfos[serviceName]
-	if !ok && len(regs) < 1 {
+	services, ok := t.serviceInfos[serviceName]
+	if !ok && len(services) < 1 {
 		return nil
 	}
-	idx := rand.Intn(len(regs))
-	return regs[idx]
+	idx := rand.Intn(len(services))
+	return services[idx]
 }
